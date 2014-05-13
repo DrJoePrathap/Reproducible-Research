@@ -12,6 +12,9 @@ This assignment makes use of data from a personal activity monitoring device. Th
 
 
 ```r
+library(ggplot2)  # we shall use ggplot2 for plotting figures
+
+# download and read the data, convert columns for convenience
 read_data <- function() {
     fname = "activity.zip"
     source_url = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
@@ -75,7 +78,6 @@ plot_steps_per_day <- function(steps_per_day, mean_steps, median_steps) {
     col_labels = c(paste("Mean:", mean_steps), paste("Median:", median_steps))
     cols = c("green", "yellow")
     
-    library(ggplot2)
     ggplot(steps_per_day, aes(x = steps)) + geom_histogram(fill = "steelblue", 
         binwidth = 1500) + geom_point(aes(x = mean_steps, y = 0, color = "green"), 
         size = 4, shape = 15) + geom_point(aes(x = median_steps, y = 0, color = "yellow"), 
@@ -97,7 +99,7 @@ plot_steps_per_day(steps_per_day, mean_steps, median_steps)
 - **Mean: 9354.23**
 - **Median: 10395**
 
-We can also observe a significant concentration closer to zero which seem like outliers.
+We can also observe a significant concentration closer to zero which seems like outliers.
 
 ## What is the average daily activity pattern?
 
@@ -107,18 +109,19 @@ Below is a plot of the average daily pattern of the number of steps plotted agai
 
 ```r
 calc_steps_per_interval <- function(tbl) {
-    steps_per_interval <- aggregate(tbl$steps, by = list(interval = tbl$interval), 
-        FUN = mean, na.rm = T)
-    colnames(steps_per_interval) <- c("interval", "steps")
-    steps_per_interval$inum <- as.numeric(steps_per_interval$interval)
-    steps_per_interval
+    steps_pi <- aggregate(tbl$steps, by = list(interval = tbl$interval), FUN = mean, 
+        na.rm = T)
+    # convert to integers for plotting
+    steps_pi$interval <- as.integer(levels(steps_pi$interval)[steps_pi$interval])
+    colnames(steps_pi) <- c("interval", "steps")
+    steps_pi
 }
 
 plot_activity_pattern <- function(steps_per_interval, max_step_interval) {
     col_labels = c(paste("Interval with Maximum Activity: ", max_step_interval))
     cols = c("red")
     
-    ggplot(steps_per_interval, aes(x = inum, y = steps)) + geom_line(color = "steelblue", 
+    ggplot(steps_per_interval, aes(x = interval, y = steps)) + geom_line(color = "steelblue", 
         size = 1) + geom_point(aes(x = max_step_interval, y = 0, color = "red"), 
         size = 4, shape = 15) + scale_color_manual(name = element_blank(), labels = col_labels, 
         values = cols) + labs(title = "Average Daily Activity Pattern", x = "Interval", 
@@ -127,7 +130,7 @@ plot_activity_pattern <- function(steps_per_interval, max_step_interval) {
 
 steps_per_interval <- calc_steps_per_interval(tbl)
 max_step_interval <- steps_per_interval[which.max(steps_per_interval$steps), 
-    ]$inum
+    ]$interval
 
 plot_activity_pattern(steps_per_interval, max_step_interval)
 ```
@@ -135,7 +138,7 @@ plot_activity_pattern(steps_per_interval, max_step_interval)
 ![plot of chunk steps_per_interval](figure/steps_per_interval.png) 
 
 
-The **104<sup>th</sup> interval** has the maximum activity on the average.
+The **835<sup>th</sup> interval** has the maximum activity on the average.
 
 ## Imputing missing values
 
@@ -219,7 +222,7 @@ calc_day_of_week_data <- function(tbl) {
     day_of_week_data
 }
 plot_day_of_week_comparison <- function(dow_data) {
-    ggplot(dow_data, aes(x = inum, y = steps)) + geom_line(color = "steelblue", 
+    ggplot(dow_data, aes(x = interval, y = steps)) + geom_line(color = "steelblue", 
         size = 1) + facet_wrap(~dayofweek, nrow = 2, ncol = 1) + labs(x = "Interval", 
         y = "Number of steps") + theme_bw()
 }
